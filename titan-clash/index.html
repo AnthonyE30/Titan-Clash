@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07111c">
+  <title>Titan Clash — Mech Arena</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="menu.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="#arena" aria-label="Titan Clash home"><span class="brand-mark">T</span><span>TITAN <b>CLASH</b><small>MECH ARENA // LOCAL VERSUS</small></span></a>
+      <div class="match-label"><span class="live-dot"></span><span id="arena-label">TACTICAL NETWORK</span><span class="divider">/</span><span id="match-mode-label">SELECT MODE</span></div>
+      <div class="toolbar">
+        <button id="restart-button" class="icon-button" type="button" aria-label="Restart match" title="Restart match">↻</button>
+        <button id="pause-button" class="icon-button" type="button" aria-label="Pause match" title="Pause match">Ⅱ</button>
+      </div>
+    </header>
+    <section class="arena-wrap" id="arena">
+      <canvas id="game-canvas" width="1000" height="600" tabindex="0" aria-label="Titan Clash multiplayer arena"></canvas>
+      <div class="hud">
+        <article class="fighter-card p1"><div class="fighter-heading"><span class="player-tag">P1</span><div><strong id="p1-name">ATLAS</strong><small id="p1-role">BALANCED FIGHTER</small></div><span id="p1-stocks" class="stocks" aria-label="Player 1 stocks">◆ ◆ ◆</span></div><div class="damage-row"><span id="p1-damage" class="damage">0</span><span class="percent">%</span><div class="damage-track"><i id="p1-meter"></i></div></div><div class="hud-meta"><span id="p1-ability">PLASMA RIFLE</span><span id="p1-ultimate">ULT READY</span></div></article>
+        <div class="round-clock"><small>TIME</small><strong id="timer">03:00</strong><span id="round-state">FIGHT!</span></div>
+        <article class="fighter-card p2" id="p2-card"><div class="fighter-heading"><span id="p2-stocks" class="stocks" aria-label="Player 2 stocks">◆ ◆ ◆</span><div class="fighter-info"><strong id="p2-name">VANGUARD</strong><small id="p2-role">HEAVY TANK</small></div><span class="player-tag">P2</span></div><div class="damage-row"><span id="p2-damage" class="damage">0</span><span class="percent">%</span><div class="damage-track"><i id="p2-meter"></i></div></div><div class="hud-meta"><span id="p2-ability">ROCKET SALVO</span><span id="p2-ultimate">ULT READY</span></div></article>
+        <article class="boss-card hidden" id="boss-card" aria-label="Boss health">
+          <div class="boss-heading"><strong id="boss-name">TITAN LEVIATHAN</strong><span id="boss-phase">SIEGE PROTOCOL</span></div>
+          <div class="boss-health-row"><div class="boss-health-track"><i id="boss-health-bar"></i></div><span id="boss-health">720 / 720</span></div>
+        </article>
+      </div>
+      <aside class="ai-debug-overlay" id="ai-debug-overlay" hidden aria-live="polite" aria-label="AI debug overlay">
+        <strong>AI DEBUG <kbd>F3</kbd></strong>
+        <span>BEHAVIOR <b id="ai-debug-behavior">—</b></span>
+        <span>TARGET <b id="ai-debug-target">—</b></span>
+        <span>THREAT <b id="ai-debug-threat">—</b></span>
+        <span>DECISION <b id="ai-debug-decision">—</b></span>
+        <span>OBSERVED <b id="ai-debug-tendencies">—</b></span>
+      </aside>
+      <div class="toast" id="toast" role="status"></div>
+      <div class="overlay hidden" id="victory-overlay" aria-live="assertive" aria-hidden="true">
+        <div class="overlay-panel victory-panel">
+          <span class="eyebrow">MATCH COMPLETE</span>
+          <h1 id="victory-title">VICTORY</h1>
+          <p id="victory-message"></p>
+          <section class="rush-result-details hidden" id="rush-result-details" aria-label="Boss Rush results">
+            <div class="rush-grade"><small>RUN GRADE</small><strong id="rush-result-grade">S</strong><span id="rush-result-score"></span></div>
+            <div class="rush-result-stats">
+              <div><small>BOSSES CLEARED</small><b id="rush-result-bosses">0 / 0</b></div>
+              <div><small>TOTAL TIME</small><b id="rush-result-time">00:00.0</b></div>
+              <div><small>DAMAGE TAKEN</small><b id="rush-result-damage">0</b></div>
+              <div><small>DEATHS</small><b id="rush-result-deaths">0</b></div>
+            </div>
+          </section>
+          <button id="play-again-button" class="start-button" type="button"><span id="play-again-label">PLAY AGAIN</span> <span>↻</span></button>
+          <button id="change-mech-button" class="menu-button hidden" type="button">CHANGE MECH</button>
+          <button id="main-menu-button" class="menu-button" type="button">MAIN MENU</button>
+        </div>
+      </div>
+      <div class="overlay hidden" id="rush-intermission" aria-live="assertive" aria-hidden="true">
+        <div class="overlay-panel victory-panel rush-intermission-panel">
+          <span class="eyebrow">BOSS RUSH // INTERMISSION</span>
+          <h1>BOSS DEFEATED</h1>
+          <p id="rush-defeated-boss"></p>
+          <div class="rush-result-stats">
+            <div><small>PROGRESS</small><b id="rush-intermission-progress">1 / 2 BOSSES CLEARED</b></div>
+            <div><small>TIME ELAPSED</small><b id="rush-intermission-time">00:00.0</b></div>
+            <div><small>DAMAGE TAKEN</small><b id="rush-intermission-damage">0</b></div>
+            <div><small>DEATHS</small><b id="rush-intermission-deaths">0</b></div>
+          </div>
+          <p class="intermission-recovery">FRAME RESTORED // DAMAGE CLEARED // ULTIMATE RECHARGED</p>
+          <button id="continue-rush-button" class="start-button" type="button">CONTINUE TO NEXT BOSS <span>→</span></button>
+        </div>
+      </div>
+      <div class="overlay hidden" id="pause-overlay" aria-hidden="true">
+        <div class="overlay-panel victory-panel">
+          <span class="eyebrow">SYSTEM // PAUSED</span>
+          <h1>PAUSED</h1>
+          <p>Match simulation is paused.</p>
+          <button id="resume-button" class="start-button" type="button">RESUME MATCH <span>→</span></button>
+          <div class="frame-step-controls hidden" id="frame-step-controls">
+            <button id="step-frame-button" type="button">STEP 1 FRAME</button>
+            <button id="step-10-frames-button" type="button">STEP 10 FRAMES</button>
+          </div>
+          <button id="pause-menu-button" class="menu-button" type="button">CHANGE MECHS / ARENA</button>
+        </div>
+      </div>
+      <div class="overlay menu-overlay" id="overlay" aria-hidden="false">
+        <div class="menu-orbit orbit-one"></div>
+        <div class="menu-orbit orbit-two"></div>
+        <section class="overlay-panel menu-panel menu-screen main-menu-screen is-active" id="main-menu-screen" aria-hidden="false">
+          <div class="menu-main">
+            <div class="menu-copy">
+              <span class="eyebrow">TITAN CLASH // COMBAT NETWORK ONLINE</span>
+              <h1>TITAN<br><em>CLASH</em></h1>
+              <p>Choose your pilot. Claim the arena.</p>
+              <div class="main-menu-actions">
+                <button class="menu-choice resume-choice hidden" id="resume-main-menu-button" type="button"><span><small>MATCH // PAUSED</small><strong>RESUME MATCH</strong></span><b>→</b></button>
+                <button class="menu-choice primary-choice" id="battle-menu-button" type="button"><span><small>01 // LOCAL OR CPU</small><strong>BATTLE</strong></span><b>→</b></button>
+                <button class="menu-choice boss-choice" id="boss-menu-button" type="button"><span><small>02 // PVE CAMPAIGN</small><strong>BOSS BATTLE</strong></span><b>→</b></button>
+                <div class="secondary-menu-actions">
+                  <button class="menu-choice compact-choice" id="boss-rush-menu-button" type="button"><span><small>SEQUENTIAL CHALLENGE</small><strong>BOSS RUSH</strong></span><b>→</b></button>
+                  <button class="menu-choice compact-choice" id="training-menu-button" type="button"><span><small>MECH LAB // PRACTICE</small><strong>TRAINING</strong></span><b>↗</b></button>
+                </div>
+                <button class="text-menu-button" id="profile-menu-button" type="button">PILOT PROFILE <span>◈</span></button>
+                <button class="text-menu-button" id="options-menu-button" type="button">OPTIONS <span>⚙</span></button>
+              </div>
+            </div>
+            <aside class="menu-showcase" aria-label="Mech roster preview">
+              <div class="showcase-grid"></div>
+              <div class="showcase-label"><span class="live-dot"></span> ROSTER STATUS // READY</div>
+              <div class="showcase-title">CHOOSE YOUR<br><em>WAR MACHINE</em></div>
+              <div class="showcase-stats"><span><b id="roster-count">08</b> MECHS</span><span><b id="arena-count">03</b> ARENAS</span><span><b id="boss-count">02</b> BOSSES</span></div>
+              <div class="showcase-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <small>ADAPT. OVERCHARGE. DOMINATE.</small>
+            </aside>
+          </div>
+        </section>
+        <section class="overlay-panel menu-panel menu-screen" id="setup-screen" aria-hidden="true">
+          <button class="back-button" type="button" data-menu-back="main-menu-screen">← COMMAND CENTER</button>
+          <div class="command-header">
+            <div>
+              <span class="eyebrow" id="setup-eyebrow">TACTICAL NETWORK // MECH SELECTION</span>
+              <h2 id="setup-title">SELECT YOUR<br><em>WAR MACHINE</em></h2>
+              <p id="setup-description">Choose a frame for each active pilot. Lock in to deploy.</p>
+            </div>
+            <div class="command-config setup-grid">
+              <label id="arena-select-row">ARENA<select id="arena-select"></select></label>
+              <label id="mode-select-row">MATCH FORMAT<select id="mode-select"><option value="stock">STOCK // 3 LIVES</option><option value="timed">TIMED // 3 MINUTES</option><option value="last">LAST MECH STANDING</option></select></label>
+              <label id="ai-select-row">P2 CONTROL<select id="ai-profile"><option value="">PLAYER // LOCAL</option><option value="easy">CPU // EASY</option><option value="medium">CPU // MEDIUM</option><option value="hard">CPU // HARD</option></select></label>
+              <label id="dummy-behavior-row" class="hidden">DUMMY BEHAVIOR<select id="dummy-behavior"><option value="idle">IDLE</option><option value="walk">WALK</option><option value="jump">JUMP</option><option value="attack">ATTACK</option><option value="block">BLOCK</option><option value="random">RANDOM</option></select></label>
+              <label id="boss-select-row" class="hidden">TARGET<select id="boss-select"></select></label>
+              <label id="boss-rush-difficulty-row" class="hidden">DIFFICULTY<select id="boss-rush-difficulty"><option value="normal">NORMAL</option><option value="hard">HARD</option><option value="extreme">EXTREME</option></select></label>
+              <div id="boss-rush-order-row" class="boss-rush-order hidden"><small>BOSS ORDER</small><strong id="boss-rush-order"></strong></div>
+            </div>
+          </div>
+          <div class="command-center">
+            <section class="roster-column" aria-label="Mech roster">
+              <div class="section-heading"><span>AVAILABLE FRAMES</span><b id="roster-heading-count">08 UNITS</b></div>
+              <div class="roster-grid" id="roster-grid"></div>
+            </section>
+            <aside class="mech-dossier" aria-live="polite">
+              <div class="dossier-topline"><span id="dossier-index">FRAME 01 // ATLAS</span><span id="dossier-status">PREVIEW</span></div>
+              <div class="dossier-portrait" id="dossier-portrait">
+                <div class="portrait-grid"></div><div class="portrait-orbit"></div>
+                <div class="portrait-mech"><i></i><b></b><em></em><small></small></div>
+                <span class="portrait-callout callout-top">TACTICAL LINK // ACTIVE</span>
+                <span class="portrait-callout callout-bottom">FRAME SIGNATURE // <b id="portrait-role">BALANCED</b></span>
+              </div>
+              <div class="dossier-title"><div><h3 id="dossier-name">ATLAS</h3><span id="dossier-role">BALANCED FIGHTER</span></div><span class="difficulty-badge" id="dossier-difficulty">EASY</span></div>
+              <div class="ability-dossier">
+                <div><small>PASSIVE</small><b id="dossier-passive">ADAPTIVE SHIELD</b></div>
+                <div><small>SPECIAL</small><b id="dossier-special">PLASMA RIFLE</b></div>
+                <div><small>ULTIMATE</small><b id="dossier-ultimate">ORBITAL STRIKE</b></div>
+              </div>
+              <div class="stat-list" id="stat-list"></div>
+              <div class="trait-list">
+                <div><small>STRENGTHS</small><ul id="dossier-strengths"></ul></div>
+                <div><small>WEAKNESSES</small><ul id="dossier-weaknesses"></ul></div>
+              </div>
+            </aside>
+          </div>
+          <div class="selection-command">
+            <div class="pilot-lock-card p1-lock">
+              <span class="pilot-stripe"></span><span class="pilot-label" id="p1-lock-label">PLAYER 1 // LOCAL</span>
+              <div class="pilot-frame"><span class="pilot-mini-art" id="p1-mini-art"></span><div><b id="p1-selected-name">ATLAS</b><small id="p1-selected-role">BALANCED FIGHTER</small></div></div>
+              <button class="lock-button" id="p1-lock-button" type="button">LOCK PLAYER 1</button>
+            </div>
+            <div class="slot-switcher" aria-label="Choose pilot to edit">
+              <span>EDIT LOADOUT</span>
+              <button id="edit-p1-button" class="slot-button active-slot" type="button">P1</button>
+              <button id="edit-p2-button" class="slot-button" type="button">P2</button>
+            </div>
+            <div class="pilot-lock-card p2-lock">
+              <span class="pilot-stripe"></span><span class="pilot-label" id="p2-lock-label">PLAYER 2 // LOCAL</span>
+              <div class="pilot-frame"><span class="pilot-mini-art" id="p2-mini-art"></span><div><b id="p2-selected-name">VANGUARD</b><small id="p2-selected-role">HEAVY TANK</small></div></div>
+              <button class="lock-button" id="p2-lock-button" type="button">LOCK PLAYER 2</button>
+            </div>
+          </div>
+          <div class="command-deploy">
+            <div class="controls">
+              <div><b>P1</b> WASD MOVE <i>LEFT CLICK ATTACK</i> <i>RIGHT CLICK SPECIAL</i> <i>E SECONDARY*</i> <i>R ULTIMATE</i></div>
+              <div id="p2-controls"><b>P2</b> ARROWS MOVE <i>K ATTACK</i> <i>L SPECIAL</i> <i>O SECONDARY*</i> <i>; ULTIMATE</i></div>
+              <small>*When equipped · Attack + direction selects a move · Shift blocks/dashes · Up jumps · Down fast-falls · Escape pauses</small>
+            </div>
+            <button id="start-button" class="start-button" type="button" disabled>LOCK BOTH UNITS TO DEPLOY <span>→</span></button>
+          </div>
+          <div class="data-selects" aria-hidden="true">
+            <select id="mech-p1" tabindex="-1"></select>
+            <select id="mech-p2" tabindex="-1"></select>
+          </div>
+        </section>
+        <section class="overlay-panel menu-panel menu-screen" id="placeholder-screen" aria-hidden="true">
+          <button class="back-button" type="button" data-menu-back="main-menu-screen">← MAIN MENU</button>
+          <span class="eyebrow">FEATURE // IN DEVELOPMENT</span>
+          <h2 id="placeholder-title">BOSS<br><em>RUSH</em></h2>
+          <p id="placeholder-description">This combat mode is planned for a future update.</p>
+          <div class="placeholder-status"><span class="status-ring"></span><div><b>NOT DEPLOYED</b><small>More combat missions are being prepared.</small></div></div>
+        </section>
+        <section class="overlay-panel menu-panel menu-screen profile-screen" id="profile-screen" aria-hidden="true">
+          <button class="back-button" type="button" data-menu-back="main-menu-screen">← MAIN MENU</button>
+          <span class="eyebrow">PILOT RECORD // LOCAL DATABASE</span>
+          <h2>PILOT<br><em>PROFILE</em></h2>
+          <div class="profile-identity">
+            <label for="profile-callsign">CALLSIGN<input id="profile-callsign" type="text" maxlength="18" autocomplete="nickname"></label>
+            <button id="save-callsign-button" type="button">SAVE CALLSIGN</button>
+            <div class="profile-favorite"><small>FAVORITE MECH</small><strong id="profile-favorite-mech">—</strong></div>
+          </div>
+          <section class="profile-section" aria-labelledby="career-stats-heading">
+            <div class="section-heading"><span id="career-stats-heading">CAREER STATISTICS</span><b>READ ONLY</b></div>
+            <div class="profile-stats">
+              <div><small>MATCHES PLAYED</small><b id="profile-matches">0</b></div>
+              <div><small>WINS</small><b id="profile-wins">0</b></div>
+              <div><small>LOSSES</small><b id="profile-losses">0</b></div>
+              <div><small>DAMAGE DEALT</small><b id="profile-damage-dealt">0</b></div>
+              <div><small>DAMAGE TAKEN</small><b id="profile-damage-taken">0</b></div>
+              <div><small>KOs</small><b id="profile-kos">0</b></div>
+              <div><small>BOSSES DEFEATED</small><b id="profile-bosses">0</b></div>
+              <div><small>TRAINING SESSIONS</small><b id="profile-training">0</b></div>
+            </div>
+          </section>
+          <section class="profile-section" aria-labelledby="boss-rush-record-heading">
+            <div class="section-heading"><span id="boss-rush-record-heading">BOSS RUSH RECORD</span><b>LOCAL CAREER</b></div>
+            <div class="profile-stats">
+              <div><small>RUNS</small><b id="profile-rush-runs">0</b></div>
+              <div><small>FULL CLEARS</small><b id="profile-rush-clears">0</b></div>
+              <div><small>BOSSES CLEARED</small><b id="profile-rush-bosses">0</b></div>
+              <div><small>BEST COMPLETION</small><b id="profile-rush-best-time">—</b></div>
+              <div><small>HIGHEST DIFFICULTY</small><b id="profile-rush-highest-difficulty">—</b></div>
+              <div><small>RUSH DEATHS</small><b id="profile-rush-deaths">0</b></div>
+              <div><small>RUSH DAMAGE TAKEN</small><b id="profile-rush-damage">0</b></div>
+              <div><small>BEST NORMAL</small><b id="profile-rush-normal">—</b></div>
+              <div><small>BEST HARD</small><b id="profile-rush-hard">—</b></div>
+              <div><small>BEST EXTREME</small><b id="profile-rush-extreme">—</b></div>
+            </div>
+          </section>
+          <section class="profile-section" aria-labelledby="most-played-heading">
+            <div class="section-heading"><span id="most-played-heading">MOST PLAYED MECHS</span><b>COMPLETED MATCHES</b></div>
+            <ol class="most-played-list" id="most-played-mechs"></ol>
+          </section>
+        </section>
+        <section class="overlay-panel menu-panel menu-screen" id="options-screen" aria-hidden="true">
+          <button class="back-button" type="button" data-menu-back="main-menu-screen">← MAIN MENU</button>
+          <span class="eyebrow">SYSTEM CONFIGURATION</span>
+          <h2>COMBAT<br><em>OPTIONS</em></h2>
+          <p>Adjust visual feedback for your display.</p>
+          <div class="option-list">
+            <label class="option-row" for="screen-shake-option"><span><b>SCREEN SHAKE</b><small>Impact feedback during combat</small></span><input id="screen-shake-option" type="checkbox" checked></label>
+            <label class="option-row" for="reduced-motion-option"><span><b>REDUCED MENU MOTION</b><small>Shorter screen transitions</small></span><input id="reduced-motion-option" type="checkbox"></label>
+          </div>
+          <div class="option-note">PLAYER 1: MOUSE + WASD <span>//</span> PLAYER 2: KEYBOARD</div>
+        </section>
+      </div>
+    </section>
+    <footer class="footer">
+      <div class="objective"><span class="objective-icon">✦</span><span><small>COMBAT DIRECTIVE</small><strong>KNOCK THEM OUT. HOLD THE ARENA.</strong></span></div>
+      <details class="training-hud hidden" id="training-hud" aria-label="Training practice data">
+        <summary>
+          <span class="training-hud-title">TRAINING DATA <i>⌄</i></span>
+          <span class="training-metric"><small>DMG</small><b id="training-damage">0</b></span>
+          <span class="training-metric"><small>COMBO</small><b id="training-combo">0</b></span>
+          <span class="training-metric"><small>BEST</small><b id="training-best-combo">0</b></span>
+          <span class="training-metric"><small>DPS</small><b id="training-dps">0</b></span>
+        </summary>
+        <div class="training-details">
+          <div class="training-readouts">
+            <div class="training-fighter-readout"><b id="training-player-passive">PASSIVE</b><span id="training-player-cooldowns">COOLDOWNS</span></div>
+            <div class="training-fighter-readout dummy-readout"><b id="training-dummy-passive">DUMMY PASSIVE</b><span id="training-dummy-cooldowns">COOLDOWNS</span></div>
+          </div>
+          <div class="training-tools">
+            <div class="training-sandbox">
+              <label><input type="checkbox" id="infinite-stocks-option" checked> INFINITE STOCKS</label>
+              <label><input type="checkbox" id="infinite-ultimate-option" checked> INFINITE ULTIMATE</label>
+              <label><input type="checkbox" id="infinite-cooldowns-option" checked> INFINITE COOLDOWNS</label>
+            </div>
+            <button id="reset-position-button" type="button">RESET POSITIONS</button>
+          </div>
+        </div>
+      </details>
+      <div class="legend"><span><kbd>↑</kbd>JUMP</span><span><kbd>↓</kbd>FAST FALL / DROP</span><span><kbd>SHIFT</kbd>BLOCK / DASH</span></div>
+      <div class="build-label">TC // 01</div>
+    </footer>
+    <section class="expand-note"><b>ENGINEERING BAY</b><span>Data-driven mechs · reusable arena definitions · shared combat systems</span><a href="README.md">EXPANSION GUIDE ↗</a></section>
+  </main>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

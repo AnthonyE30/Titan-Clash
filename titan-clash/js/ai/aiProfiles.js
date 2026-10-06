@@ -1,0 +1,53 @@
+export const AI_PROFILES = Object.freeze({
+  easy: Object.freeze({
+    id: 'easy',
+    name: 'Easy',
+    reactionTime: .52,
+    reactionJitter: .16,
+    attackRange: 105,
+    specialRange: .76,
+    blockChance: .1,
+    retreatDamage: 105,
+    aggression: .48,
+    adaptationLevel: 0,
+    tendencyWindow: 8,
+    useDirectionalAttacks: false,
+    recognizeCombos: false,
+    predictOpponent: false,
+    recoveryMixups: false
+  }),
+  medium: Object.freeze({
+    id: 'medium',
+    name: 'Medium',
+    reactionTime: .28,
+    reactionJitter: .09,
+    attackRange: 125,
+    specialRange: .9,
+    blockChance: .34,
+    retreatDamage: 145,
+    aggression: .7,
+    adaptationLevel: 1,
+    tendencyWindow: 10,
+    useDirectionalAttacks: true,
+    recognizeCombos: false,
+    predictOpponent: false,
+    recoveryMixups: false
+  }),
+  hard: Object.freeze({
+    id: 'hard',
+    name: 'Hard',
+    reactionTime: .13,
+    reactionJitter: .035,
+    attackRange: 145,
+    specialRange: 1.1,
+    blockChance: .58,
+    retreatDamage: 190,
+    aggression: .88,
+    adaptationLevel: 2,
+    tendencyWindow: 12,
+    useDirectionalAttacks: true,
+    recognizeCombos: true,
+    predictOpponent: true,
+    recoveryMixups: true
+  })
+});
