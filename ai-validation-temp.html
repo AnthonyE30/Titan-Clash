@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<body>
+  <pre id="results">RUNNING</pre>
+  <script type="module">
+    import { AIController } from './js/ai/aiController.js';
+
+    const assert = (condition, message) => {
+      if (!condition) throw new Error(message);
+    };
+    const opponent = () => ({
+      stocks: 3, onGround: true, airJumps: 1, dashTime: 0, currentAttack: null,
+      specialCooldown: 0, vy: 0, x: 500, y: 250, width: 40, height: 60, vx: 0, combo: 0
+    });
+    const hard = new AIController('hard');
+    const target = opponent();
+    hard.observeOpponent(target, .1);
+    target.onGround = false;
+    target.airJumps = 0;
+    target.vy = -220;
+    hard.observeOpponent(target, .1);
+    target.currentAttack = { id: 1 };
+    hard.observeOpponent(target, .1);
+    target.onGround = true;
+    target.airJumps = 1;
+    hard.observeOpponent(target, .1);
+    target.onGround = false;
+    target.airJumps = 0;
+    target.vy = -220;
+    hard.observeOpponent(target, .1);
+    target.currentAttack = { id: 2 };
+    hard.observeOpponent(target, .1);
+    assert(hard.getOpponentTendencies().jumpAttacks === 2, 'Hard did not recognize repeat jump attacks');
+
+    const fighter = {
+      x: 200, y: 250, width: 40, height: 60, onGround: true,
+      config: { attacks: { up: {} } }
+    };
+    hard.currentControls = { up: 'ArrowUp', attack: 'KeyK' };
+    hard.attack(fighter, target, { width: 1000, platforms: [] });
+    assert(hard.keys.has('ArrowUp') && hard.keys.has('KeyK'), 'Hard anti-air did not map semantic inputs');
+
+    const arena = { width: 1000, hazards: [] };
+    const threatFighter = { x: 250, y: 240, width: 40, height: 60 };
+    const controller = new AIController('medium');
+    const arenaThreat = controller.findHazard(threatFighter, arena, 0, {
+      arenaEvents: { getThreats: () => [{ x: 230, y: 200, width: 80, height: 100, warning: true }] }
+    });
+    assert(arenaThreat?.source === 'arena event', 'Arena event geometry was not recognized');
+    const bossThreat = controller.findHazard(threatFighter, arena, 0, {
+      arenaEvents: { getThreats: () => [] },
+      boss: { x: 500, y: 100, width: 80, height: 100, telegraph: {
+        style: 'area', targetX: 270, targetY: 250, radius: 40
+      } }
+    });
+    assert(bossThreat?.source === 'boss telegraph', 'Boss area telegraph was not recognized');
+    const projectileThreat = controller.findHazard(threatFighter, arena, 0, {
+      arenaEvents: { getThreats: () => [] },
+      bossAttacks: [{ x: 240, y: 230, width: 60, height: 80, delay: 1, life: 3, active: true }]
+    });
+    assert(projectileThreat?.source === 'boss telegraph', 'Delayed boss attack was not recognized');
+
+    hard.observeOpponent(target, 13);
+    assert(hard.getOpponentTendencies().jumpAttacks === 0, 'Observations did not expire');
+    assert(hard.opponentObservations.length <= 64, 'Observation memory exceeded its cap');
+    assert(new AIController('easy').profile.adaptationLevel === 0, 'Easy should observe without adapting');
+    document.querySelector('#results').textContent = 'PASS: tendency recognition, semantic anti-air inputs, event/boss threats, observation decay and profile gating';
+  </script>
+</body>
+</html>
